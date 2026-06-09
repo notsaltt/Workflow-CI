@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import dagshub
 import mlflow
@@ -14,7 +13,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import label_binarize
 
 # ============================================================
-# STEP 1: Init DagsHub PERTAMA sebelum apapun
+# Init DagsHub — tracking URI otomatis diset ke DagsHub
 # ============================================================
 dagshub.init(
     repo_owner='notsaltt',
@@ -22,10 +21,8 @@ dagshub.init(
     mlflow=True
 )
 
-# ============================================================
-# STEP 2: Ambil Run ID dari environment (di-set oleh mlflow run)
-# ============================================================
-run_id = os.environ.get("MLFLOW_RUN_ID")
+# Hapus MLFLOW_RUN_ID agar tidak konflik dengan run lokal dari mlflow run
+os.environ.pop("MLFLOW_RUN_ID", None)
 
 # Load data
 train = pd.read_csv('iris_preprocessing/train.csv')
@@ -43,10 +40,7 @@ params = {
     'random_state': 42
 }
 
-# ============================================================
-# STEP 3: Start run — pakai run_id jika ada, buat baru jika tidak
-# ============================================================
-with mlflow.start_run(run_id=run_id, run_name="CI_RandomForest" if not run_id else None):
+with mlflow.start_run(run_name="CI_RandomForest"):
 
     model = RandomForestClassifier(**params)
     model.fit(X_train, y_train)
