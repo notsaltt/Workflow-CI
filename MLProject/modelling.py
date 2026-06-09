@@ -23,8 +23,8 @@ dagshub.init(
 )
 
 # Load data
-train = pd.read_csv('MLProject/iris_preprocessing/train.csv')
-test  = pd.read_csv('MLProject/iris_preprocessing/test.csv')
+train = pd.read_csv('iris_preprocessing/train.csv')
+test  = pd.read_csv('iris_preprocessing/test.csv')
 
 X_train = train.drop('target', axis=1)
 y_train = train['target']
