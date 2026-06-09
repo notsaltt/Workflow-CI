@@ -52,8 +52,15 @@ jobs:
 
       # 7. Build & Push Docker image
       - name: Build and Push Docker image
+        env:
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
+          # Cari run_id terbaru dari mlruns
+          RUN_ID=$(ls -t mlruns/0/ | grep -v 'meta.yaml' | head -1)
+          echo "Using run ID: $RUN_ID"
+          
           mlflow models build-docker \
-            --model-uri "models:/random_forest_model/latest" \
+            --model-uri "mlruns/0/$RUN_ID/artifacts/random_forest_model" \
             --name "${{ secrets.DOCKER_USERNAME }}/iris-mlflow:latest"
+          
           docker push ${{ secrets.DOCKER_USERNAME }}/iris-mlflow:latest

@@ -58,7 +58,11 @@ with mlflow.start_run(run_name="CI_RandomForest"):
     mlflow.log_metric("recall", recall)
     mlflow.log_metric("f1_score", f1)
 
-    mlflow.sklearn.log_model(model, "random_forest_model")
+    mlflow.sklearn.log_model(
+    model,
+    "random_forest_model",
+    registered_model_name="random_forest_model"
+)
 
     # Artefak 1: Confusion Matrix
     cm = confusion_matrix(y_test, y_pred)
