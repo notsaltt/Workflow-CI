@@ -1,9 +1,10 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import dagshub
 import mlflow
 import mlflow.sklearn
-import dagshub
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score,
@@ -11,14 +12,20 @@ from sklearn.metrics import (
     classification_report, roc_curve, auc
 )
 from sklearn.preprocessing import label_binarize
-import os
 
-# INIT DAGSHUB
+# ============================================================
+# STEP 1: Init DagsHub PERTAMA sebelum apapun
+# ============================================================
 dagshub.init(
     repo_owner='notsaltt',
     repo_name='Eksperimen1',
     mlflow=True
 )
+
+# ============================================================
+# STEP 2: Ambil Run ID dari environment (di-set oleh mlflow run)
+# ============================================================
+run_id = os.environ.get("MLFLOW_RUN_ID")
 
 # Load data
 train = pd.read_csv('iris_preprocessing/train.csv')
@@ -36,13 +43,11 @@ params = {
     'random_state': 42
 }
 
-# Gunakan active run jika sudah ada (dari mlflow run), 
-# jika tidak ada baru buat run baru
-active_run = mlflow.active_run()
-if active_run is None:
-    active_run = mlflow.start_run(run_name="CI_RandomForest")
+# ============================================================
+# STEP 3: Start run — pakai run_id jika ada, buat baru jika tidak
+# ============================================================
+with mlflow.start_run(run_id=run_id, run_name="CI_RandomForest" if not run_id else None):
 
-with active_run:
     model = RandomForestClassifier(**params)
     model.fit(X_train, y_train)
 
