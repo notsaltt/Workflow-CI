@@ -13,9 +13,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import label_binarize
 import os
 
-# ============================================================
 # INIT DAGSHUB
-# ============================================================
 dagshub.init(
     repo_owner='notsaltt',
     repo_name='Eksperimen1',
@@ -31,7 +29,6 @@ y_train = train['target']
 X_test  = test.drop('target', axis=1)
 y_test  = test['target']
 
-# Training
 params = {
     'n_estimators': 100,
     'max_depth': 10,
@@ -39,8 +36,13 @@ params = {
     'random_state': 42
 }
 
-with mlflow.start_run(run_name="CI_RandomForest"):
+# Gunakan active run jika sudah ada (dari mlflow run), 
+# jika tidak ada baru buat run baru
+active_run = mlflow.active_run()
+if active_run is None:
+    active_run = mlflow.start_run(run_name="CI_RandomForest")
 
+with active_run:
     model = RandomForestClassifier(**params)
     model.fit(X_train, y_train)
 
@@ -99,5 +101,8 @@ with mlflow.start_run(run_name="CI_RandomForest"):
         f.write(report)
     mlflow.log_artifact("classification_report.txt")
 
-    print(f"Accuracy: {accuracy:.4f}")
+    print(f"Accuracy : {accuracy:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall   : {recall:.4f}")
+    print(f"F1 Score : {f1:.4f}")
     print("Run selesai!")
