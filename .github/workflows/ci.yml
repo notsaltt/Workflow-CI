@@ -43,24 +43,43 @@ jobs:
             roc_curve.png
             classification_report.txt
 
-      # 6. Login Docker Hub
+      # 6. Setup Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 7. Login Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 7. Build & Push Docker image
+      # 8. Build & Push Docker image dari DagsHub artifact
       - name: Build and Push Docker image
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+          MLFLOW_TRACKING_URI: https://dagshub.com/notsaltt/Eksperimen1.mlflow
+          MLFLOW_TRACKING_USERNAME: notsaltt
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
-          # Cari run_id terbaru dari mlruns
-          RUN_ID=$(ls -t mlruns/0/ | grep -v 'meta.yaml' | head -1)
-          echo "Using run ID: $RUN_ID"
-          
+          # Ambil run_id terbaru dari DagsHub via mlflow
+          RUN_ID=$(python -c "
+          import mlflow
+          import os
+          mlflow.set_tracking_uri(os.environ['MLFLOW_TRACKING_URI'])
+          client = mlflow.tracking.MlflowClient()
+          runs = client.search_runs(
+              experiment_ids=['0'],
+              order_by=['start_time DESC'],
+              max_results=1
+          )
+          print(runs[0].info.run_id)
+          ")
+          echo "Latest Run ID: $RUN_ID"
+
           mlflow models build-docker \
-            --model-uri "mlruns/0/$RUN_ID/artifacts/random_forest_model" \
-            --name "${{ secrets.DOCKER_USERNAME }}/iris-mlflow:latest"
-          
+            --model-uri "runs:/$RUN_ID/random_forest_model" \
+            --name "${{ secrets.DOCKER_USERNAME }}/iris-mlflow:latest" \
+            --env-manager local
+
           docker push ${{ secrets.DOCKER_USERNAME }}/iris-mlflow:latest
